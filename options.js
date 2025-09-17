@@ -6,10 +6,10 @@ const saveOptions = () => {
     () => {
       // Update status to let user know options were saved.
       const status = document.getElementById('status');
-      status.textContent = 'Options saved.';
+      status.textContent = 'API Key saved successfully!';
       setTimeout(() => {
         status.textContent = '';
-      }, 750);
+      }, 2000);
     }
   );
 };
@@ -21,5 +21,17 @@ const restoreOptions = () => {
   });
 };
 
+// Add event listener to toggle API key visibility
+const toggleApiKeyVisibility = () => {
+  const apiKeyInput = document.getElementById('apiKey');
+  const showApiKeyCheckbox = document.getElementById('showApiKey');
+  if (showApiKeyCheckbox.checked) {
+    apiKeyInput.type = 'text';
+  } else {
+    apiKeyInput.type = 'password';
+  }
+};
+
 document.addEventListener('DOMContentLoaded', restoreOptions);
 document.getElementById('save').addEventListener('click', saveOptions);
+document.getElementById('showApiKey').addEventListener('change', toggleApiKeyVisibility);
