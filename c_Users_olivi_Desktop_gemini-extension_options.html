@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Itinerary Extractor Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+      background: #0a0a0a;
+      color: #ededed;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .container {
+      width: 500px;
+      background: #0f0f0f;
+      border: 1px solid #1a1a1a;
+      padding: 24px;
+      border-radius: 8px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fafafa;
+      letter-spacing: -0.01em;
+      margin: 0 0 16px 0;
+    }
+    p {
+      font-size: 14px;
+      color: #a3a3a3;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 8px;
+      color: #a3a3a3;
+    }
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+      background: #0a0a0a;
+      color: #ededed;
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+    }
+    input[type="password"]:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .checkbox-container label {
+      font-weight: 400;
+      margin: 0 0 0 8px;
+      display: inline;
+      color: #a3a3a3;
+    }
+    /* Custom Checkbox Styles */
+    .checkbox-container input[type="checkbox"] {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .checkbox-container .custom-checkbox {
+      position: relative;
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #404040;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      background: #0a0a0a;
+    }
+    .checkbox-container .custom-checkbox::after {
+      content: '';
+      position: absolute;
+      display: none;
+      left: 5px;
+      top: 1px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .checkbox-container input:checked ~ .custom-checkbox {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+    }
+    .checkbox-container input:checked ~ .custom-checkbox::after {
+      display: block;
+    }
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      outline: none;
+      background: #3b82f6;
+      color: #ffffff;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button:active {
+      transform: scale(0.98);
+      background: #1d4ed8;
+    }
+    #status {
+      margin-top: 12px;
+      color: #a3a3a3;
+      font-weight: 500;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>API Key Settings</h1>
+    <p>Your Gemini API key is stored securely using Chrome's built-in storage. It is synced across your devices but is not accessible to the developer or any third parties.</p>
+    <label for="apiKey">Gemini API Key:</label>
+    <input type="password" id="apiKey" size="50">
+    <label class="checkbox-container" for="showApiKey">
+      <input type="checkbox" id="showApiKey">
+      <span class="custom-checkbox"></span>
+      <label for="showApiKey">Show API Key</label>
+    </label>
+    <button id="save">Save</button>
+    <div id="status"></div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

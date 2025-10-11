@@ -56,14 +56,9 @@
       padding: 20px;
       display: flex;
       flex-direction: column;
-      padding: 20px;
-      overflow-y: auto; /* Make this the main scrolling container */
-      position: relative; /* Needed for sticky positioning context */
     }
 
     #state-container {
-      flex: 1; /* Allow state container to fill space */
-      display: flex;
       flex-direction: column;
     }
 
@@ -181,9 +176,7 @@
       overflow-y: auto; /* Enable vertical scrolling */
       padding-right: 8px; /* Space for the scrollbar */
       padding-bottom: 70px; /* Add space at the bottom to prevent content from being hidden by the sticky actions */
-      /* The parent .content is now the scroller */
       white-space: pre-wrap;
-      margin-top: 20px; /* Space below the 'Extract' button */
       line-height: 1.6;
       font-size: 14px;
       color: #ededed;
@@ -193,7 +186,6 @@
 
     /* Custom Scrollbar for Results */
     .results-list::-webkit-scrollbar {
-    .content::-webkit-scrollbar {
       width: 6px;
     }
 
@@ -202,13 +194,11 @@
     }
 
     .results-list::-webkit-scrollbar-thumb {
-    .content::-webkit-scrollbar-thumb {
       background: #262626;
       border-radius: 3px;
     }
 
     .results-list::-webkit-scrollbar-thumb:hover {
-    .content::-webkit-scrollbar-thumb:hover {
       background: #404040;
     }
 
@@ -218,14 +208,9 @@
       left: 0;
       right: 0;
       padding: 16px 0; /* Add some vertical padding */
-      position: sticky;
-      bottom: 0;
-      padding: 16px 20px;
-      margin: 0 -20px -20px -20px; /* Expand to fill parent padding */
       background: linear-gradient(180deg, rgba(10, 10, 10, 0) 0%, #0a0a0a 40%); /* Gradient to fade into the background */
       display: flex;
       gap: 12px;
-      z-index: 10;
     }
 
     .material-symbols-outlined {
