@@ -1,37 +1,46 @@
-// Saves options to chrome.storage
-const saveOptions = () => {
-  const apiKey = document.getElementById('apiKey').value;
-  chrome.storage.sync.set(
-    { apiKey: apiKey },
-    () => {
-      // Update status to let user know options were saved.
-      const status = document.getElementById('status');
-      status.textContent = 'API Key saved successfully!';
-      setTimeout(() => {
-        status.textContent = '';
-      }, 2000);
-    }
-  );
-};
-
-// Restores input box state using the preferences stored in chrome.storage.
-const restoreOptions = () => {
-  chrome.storage.sync.get({ apiKey: '' }, (items) => {
-    document.getElementById('apiKey').value = items.apiKey;
-  });
-};
-
-// Add event listener to toggle API key visibility
-const toggleApiKeyVisibility = () => {
+document.addEventListener('DOMContentLoaded', () => {
+  // Cache DOM elements for better performance and readability
   const apiKeyInput = document.getElementById('apiKey');
   const showApiKeyCheckbox = document.getElementById('showApiKey');
-  if (showApiKeyCheckbox.checked) {
-    apiKeyInput.type = 'text';
-  } else {
-    apiKeyInput.type = 'password';
-  }
-};
+  const saveButton = document.getElementById('save');
+  const statusDiv = document.getElementById('status');
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('save').addEventListener('click', saveOptions);
-document.getElementById('showApiKey').addEventListener('change', toggleApiKeyVisibility);
+  // Saves options to chrome.storage using async/await for cleaner code
+  const saveOptions = async () => {
+    const apiKey = apiKeyInput.value;
+    try {
+      await chrome.storage.sync.set({ apiKey });
+      statusDiv.textContent = 'API Key saved successfully!';
+      setTimeout(() => {
+        statusDiv.textContent = '';
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving API key:', error);
+      statusDiv.textContent = 'Error saving key.';
+    }
+  };
+
+  // Restores input box state using async/await
+  const restoreOptions = async () => {
+    try {
+      const items = await chrome.storage.sync.get({ apiKey: '' });
+      apiKeyInput.value = items.apiKey;
+    } catch (error) {
+      console.error('Error restoring API key:', error);
+      statusDiv.textContent = 'Error loading key.';
+    }
+  };
+
+  // Toggles API key visibility
+  const toggleApiKeyVisibility = () => {
+    apiKeyInput.type = showApiKeyCheckbox.checked ? 'text' : 'password';
+  };
+
+  // --- Initialize and attach event listeners ---
+
+  // Restore saved options when the page loads
+  restoreOptions();
+
+  saveButton.addEventListener('click', saveOptions);
+  showApiKeyCheckbox.addEventListener('change', toggleApiKeyVisibility);
+});

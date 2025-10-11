@@ -2,172 +2,301 @@
 <html>
 <head>
   <title>Itinerary Extractor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
   <style>
-    body {
-      width: 320px;
-      font-family: 'Roboto', sans-serif;
-      font-size: 14px;
-      color: #3c4043;
-      background-color: #f8f9fa;
-      padding: 16px;
-      box-sizing: border-box;
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    #results {
-      white-space: pre-wrap;
-      margin-top: 16px;
-      border-top: 1px solid #dadce0;
-      padding-top: 16px;
+
+    body {
+      width: 380px;
+      min-height: 500px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+      background: #0a0a0a;
+      color: #ededed;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+    }
+
+    .header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #1a1a1a;
+      background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      color: #3b82f6;
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fafafa;
+      letter-spacing: -0.01em;
+    }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow-y: auto; /* Make this the main scrolling container */
+      position: relative; /* Needed for sticky positioning context */
+    }
+
+    #state-container {
+      flex: 1; /* Allow state container to fill space */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      flex: 1;
+      min-height: 200px;
+      gap: 16px;
+    }
+
+    .state-icon {
+      color: #404040;
+      margin-bottom: 8px;
+      font-size: 48px;
+    }
+
+    .error-icon {
+      color: #ef4444;
+    }
+
+    .state-text {
+      font-size: 14px;
+      color: #a3a3a3;
+      max-width: 280px;
       line-height: 1.5;
     }
-    .actions {
-      display: none;
-      margin-top: 16px;
-      gap: 8px;
+
+    .state-text a {
+      color: #3b82f6;
+      text-decoration: none;
     }
+
+    .state-text a:hover {
+      text-decoration: underline;
+    }
+
     .spinner {
-      border: 4px solid #f3f3f3; /* Light grey */
-      border-top: 4px solid #1a73e8; /* Google Blue */
+      width: 40px;
+      height: 40px;
+      border: 3px solid #1a1a1a;
+      border-top-color: #3b82f6;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      margin: 16px auto 0;
+      animation: spin 0.8s linear infinite;
     }
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
-    fieldset {
-      border: none;
-      padding: 0;
-      margin: 0 0 16px 0;
-    }
-    legend {
-      font-weight: 500;
-      font-size: 16px;
-      color: #202124;
-      margin-bottom: 12px;
-      padding: 0;
-    }
-    button {
-      font-family: 'Roboto', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      border-radius: 4px;
-      padding: 8px 16px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: background-color 0.2s, box-shadow 0.2s;
-    }
-    #extractButton {
-      background-color: #1a73e8;
-      color: white;
-      width: 100%;
-    }
-    #extractButton:hover {
-      background-color: #287ae6;
-      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
-    }
-    #extractButton:disabled {
-      background-color: #e8eaed;
-      color: #9aa0a6;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    .actions button {
-      background-color: transparent;
-      color: #1a73e8;
-      border-color: #dadce0;
-    }
-    .actions button {
-      display: flex;
+
+    .button {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      outline: none;
     }
-    .actions button:hover {
-      background-color: rgba(26, 115, 232, 0.04);
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
+
+    .button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .button-primary {
+      background: #3b82f6;
+      color: #ffffff;
+    }
+
+    .button-primary:hover:not(:disabled) {
+      background: #2563eb;
+    }
+
+    .button-secondary {
+      background: #1a1a1a;
+      color: #ededed;
+      border: 1px solid #262626;
+      flex: 1;
+    }
+
+    .button-secondary:hover:not(:disabled) {
+      background: #262626;
+      border-color: #404040;
+    }
+
+    .button-full {
+      width: 100%;
+    }
+
+    .results-container {
+      position: relative; /* Establish a positioning context for the .actions */
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0; /* Important for flexbox scrolling in Chrome */
+      margin-top: 20px; /* Space below the 'Extract' button */
+    }
+
+    .results-list {
+      flex: 1; /* Allow this to grow and fill available space */
+      overflow-y: auto; /* Enable vertical scrolling */
+      padding-right: 8px; /* Space for the scrollbar */
+      padding-bottom: 70px; /* Add space at the bottom to prevent content from being hidden by the sticky actions */
+      /* The parent .content is now the scroller */
+      white-space: pre-wrap;
+      margin-top: 20px; /* Space below the 'Extract' button */
+      line-height: 1.6;
+      font-size: 14px;
+      color: #ededed;
+      text-align: left;
+      word-break: break-word;
+    }
+
+    /* Custom Scrollbar for Results */
+    .results-list::-webkit-scrollbar {
+    .content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .results-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .results-list::-webkit-scrollbar-thumb {
+    .content::-webkit-scrollbar-thumb {
+      background: #262626;
+      border-radius: 3px;
+    }
+
+    .results-list::-webkit-scrollbar-thumb:hover {
+    .content::-webkit-scrollbar-thumb:hover {
+      background: #404040;
+    }
+
+    .actions {
+      position: absolute; /* Make the actions float over the content */
+      bottom: 0; /* Stick to the bottom of the .results-container */
+      left: 0;
+      right: 0;
+      padding: 16px 0; /* Add some vertical padding */
+      position: sticky;
+      bottom: 0;
+      padding: 16px 20px;
+      margin: 0 -20px -20px -20px; /* Expand to fill parent padding */
+      background: linear-gradient(180deg, rgba(10, 10, 10, 0) 0%, #0a0a0a 40%); /* Gradient to fade into the background */
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+
     .material-symbols-outlined {
       font-size: 20px;
     }
+
     /* Custom Radio Button Styles */
-    .radio-container {
+    .radio-group {
       display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-      cursor: pointer;
+      gap: 8px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      padding: 4px;
+      border: 1px solid #1a1a1a;
     }
-    .radio-container input[type="radio"] {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .radio-container .custom-radio {
-      position: relative;
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid #5f6368;
-      border-radius: 50%;
-      margin-right: 12px;
-      transition: border-color 0.2s;
-    }
-    .radio-container .custom-radio::after {
-      content: "";
-      position: absolute;
+
+    .radio-group input[type="radio"] {
       display: none;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: #1a73e8;
     }
-    .radio-container input:checked ~ .custom-radio {
-      border-color: #1a73e8;
+
+    .radio-group label {
+      flex: 1;
+      text-align: center;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #a3a3a3;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
     }
-    .radio-container input:checked ~ .custom-radio::after {
-      display: block;
+
+    .radio-group input[type="radio"]:checked + label {
+      background: #262626;
+      color: #fafafa;
+    }
+
+    .radio-group label:hover {
+      background: #1a1a1a;
     }
   </style>
 </head>
 <body>
-  <fieldset>
-    <legend>Select Itinerary Type</legend>
-    <label class="radio-container" for="typeLocations">
-      <input type="radio" id="typeLocations" name="itineraryType" value="locations" checked>
-      <span class="custom-radio"></span>
-      Specific Locations
-    </label>
-    <label class="radio-container" for="typeNeighborhoods">
-      <input type="radio" id="typeNeighborhoods" name="itineraryType" value="neighborhoods">
-      <span class="custom-radio"></span>
-      Neighborhoods Only
-    </label>
-    <label class="radio-container" for="typeCities">
-      <input type="radio" id="typeCities" name="itineraryType" value="cities">
-      <span class="custom-radio"></span>
-      Cities Only
-    </label>
-  </fieldset>
-  <button id="extractButton">Extract Locations</button>
-  <div id="spinner" class="spinner" style="display: none;"></div>
-  <div id="results"></div>
-  <div class="actions" id="actionsContainer" style="display: none;">
-    <button id="openMapsButton">
-      <span class="material-symbols-outlined">map</span><span class="button-text">Create Map</span>
-    </button>
-    <button id="copyButton">
-      <span class="material-symbols-outlined">content_copy</span><span class="button-text">Copy List</span>
-    </button>
+  <div class="container">
+    <div class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="material-symbols-outlined" style="font-size: 24px;">list_alt</span>
+        </div>
+        <h1 class="title">Itinerary Extractor</h1>
+      </div>
+      <div class="radio-group">
+        <input type="radio" id="typeLocations" name="itineraryType" value="locations" checked>
+        <label for="typeLocations">Locations</label>
+
+        <input type="radio" id="typeNeighborhoods" name="itineraryType" value="neighborhoods">
+        <label for="typeNeighborhoods">Neighborhoods</label>
+
+        <input type="radio" id="typeCities" name="itineraryType" value="cities">
+        <label for="typeCities">Cities</label>
+      </div>
+    </div>
+    <div class="content">
+      <button id="extractButton" class="button button-primary button-full">Extract Itinerary</button>
+      <div id="state-container">
+        <!-- This container will be dynamically populated by popup.js -->
+      </div>
+    </div>
   </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

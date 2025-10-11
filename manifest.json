@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Itinerary Location Extractor",
+  "name": "Itinerary Extractor",
   "version": "1.0",
   "description": "Extracts locations from an itinerary on a webpage using Gemini.",
   "icons": {

@@ -1,28 +1,83 @@
 const extractButton = document.getElementById('extractButton');
-const resultsDiv = document.getElementById('results');
-const actionsContainer = document.getElementById('actionsContainer');
-const spinner = document.getElementById('spinner');
+const stateContainer = document.getElementById('state-container');
+let currentResults = ''; // Store the latest results
 
-function setUIState(isLoading, message = '') {
-  extractButton.disabled = isLoading;
-  spinner.style.display = isLoading ? 'block' : 'none';
-  resultsDiv.style.display = isLoading ? 'none' : 'block';
-  if (message) {
-    resultsDiv.innerText = message;
-  }
-  // Only show/hide actions based on whether the final result is a list
-  actionsContainer.style.display = !isLoading && resultsDiv.innerText.includes('-') ? 'flex' : 'none';
+// --- UI State Rendering Functions ---
+
+function renderInitialState() {
+  stateContainer.innerHTML = `
+    <div class="state-container">
+      <span class="material-symbols-outlined state-icon">auto_awesome</span>
+      <p class="state-text">Click the button above to extract locations, neighborhoods, or cities from the current page.</p>
+    </div>
+  `;
 }
 
-document.getElementById('extractButton').addEventListener('click', () => {
-  actionsContainer.style.display = 'none'; // Hide actions on new request
+function renderLoadingState() {
+  extractButton.disabled = true;
+  stateContainer.innerHTML = `
+    <div class="state-container">
+      <div class="spinner"></div>
+      <p class="state-text">Extracting content and asking Gemini...</p>
+    </div>
+  `;
+}
+
+function renderErrorState(message) {
+  extractButton.disabled = false;
+  stateContainer.innerHTML = `
+    <div class="state-container">
+      <span class="material-symbols-outlined state-icon error-icon">error</span>
+      <p class="state-text">${message}</p>
+    </div>
+  `;
+  // Re-add listener for the options page link if it exists
+  const optionsLink = document.getElementById('openOptionsLink');
+  if (optionsLink) {
+    optionsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.openOptionsPage();
+    });
+  }
+}
+
+function renderResultsState(resultsText) {
+  extractButton.disabled = false;
+  currentResults = resultsText; // Cache the results
+  const isList = resultsText.trim().startsWith('-');
+
+  // The results container will now manage scrolling and fixed actions.
+  // The .actions div is now outside the scrollable .results-list.
+  stateContainer.innerHTML = `
+    <div class="results-container">
+      <div class="results-list">${resultsText}</div>
+      ${isList ? `
+        <div class="actions">
+          <button id="openMapsButton" class="button button-secondary">
+            <span class="material-symbols-outlined">map</span>
+            <span>Create Map</span>
+          </button>
+          <button id="copyButton" class="button button-secondary">
+            <span class="material-symbols-outlined">content_copy</span>
+            <span>Copy List</span>
+          </button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// --- Event Listeners ---
+
+document.addEventListener('DOMContentLoaded', renderInitialState);
+
+extractButton.addEventListener('click', () => {
   const itineraryType = document.querySelector('input[name="itineraryType"]:checked').value;
-  setUIState(true, 'Extracting content...');
-  
+  renderLoadingState();
+
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
 
-    // Inject the content script to get the page's text content
     chrome.scripting.executeScript(
       {
         target: { tabId: activeTab.id },
@@ -30,74 +85,65 @@ document.getElementById('extractButton').addEventListener('click', () => {
       },
       (injectionResults) => {
         if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
-          setUIState(false, 'Error: Could not extract content from the page.');
+          renderErrorState('Error: Could not extract content from the page. Try reloading the tab.');
           return;
         }
-        
+
         const pageContent = injectionResults[0].result;
-        resultsDiv.innerText = 'Content extracted. Asking Gemini...';
         callGeminiApi(pageContent, itineraryType);
       }
     );
   });
 });
 
-// Add event listener for the new map button
-document.getElementById('openMapsButton').addEventListener('click', () => {
-  const locationsText = resultsDiv.innerText;
+// Use event delegation for action buttons inside the dynamic container
+stateContainer.addEventListener('click', (event) => {
+  const target = event.target.closest('button');
+  if (!target) return;
 
-  // Parse the bulleted list into an array of locations
-  const locations = locationsText.split('\n')
-    .map(line => line.replace(/^-/,'').trim()) // Remove leading hyphens and trim whitespace
-    .filter(line => line.length > 0); // Remove any empty lines
+  if (target.id === 'openMapsButton') {
+    const locations = currentResults.split('\n')
+      .map(line => line.replace(/^-/, '').trim())
+      .filter(line => line.length > 0);
 
-  if (locations.length === 0) {
-    return; // Do nothing if no locations were parsed
-  } else if (locations.length === 1) { // Exactly one location, create a search query
-    const query = encodeURIComponent(locations[0]);
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    chrome.tabs.create({ url: mapsUrl });
-  } else { // More than one location, create one or more directions routes in chunks
-    const MAX_MAP_STOPS = 10;
-    for (let i = 0; i < locations.length; i += MAX_MAP_STOPS) {
-      const chunk = locations.slice(i, i + MAX_MAP_STOPS);
-      const waypoints = chunk.map(location => encodeURIComponent(location)).join('/');
-      const mapsUrl = `https://www.google.com/maps/dir/${waypoints}`;
+    if (locations.length === 0) return;
+
+    if (locations.length === 1) {
+      const query = encodeURIComponent(locations[0]);
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
       chrome.tabs.create({ url: mapsUrl });
+    } else {
+      const MAX_MAP_STOPS = 10;
+      for (let i = 0; i < locations.length; i += MAX_MAP_STOPS) {
+        const chunk = locations.slice(i, i + MAX_MAP_STOPS);
+        const waypoints = chunk.map(location => encodeURIComponent(location)).join('/');
+        const mapsUrl = `https://www.google.com/maps/dir/${waypoints}`;
+        chrome.tabs.create({ url: mapsUrl });
+      }
     }
+  }
+
+  if (target.id === 'copyButton') {
+    const buttonTextSpan = target.querySelector('span:last-child');
+    navigator.clipboard.writeText(currentResults).then(() => {
+      const originalText = buttonTextSpan.innerText;
+      buttonTextSpan.innerText = 'Copied!';
+      target.disabled = true;
+      setTimeout(() => {
+        buttonTextSpan.innerText = originalText;
+        target.disabled = false;
+      }, 1500);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      buttonTextSpan.innerText = 'Failed!';
+    });
   }
 });
 
-// Add event listener for the new copy button
-document.getElementById('copyButton').addEventListener('click', () => {
-  const copyButton = document.getElementById('copyButton');
-  const buttonText = copyButton.querySelector('.button-text');
-  const textToCopy = resultsDiv.innerText;
-
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    // Provide user feedback that copy was successful
-    const originalText = buttonText.innerText;
-    buttonText.innerText = 'Copied!';
-    setTimeout(() => {
-      buttonText.innerText = originalText;
-    }, 1500); // Revert text after 1.5 seconds
-  }).catch(err => {
-    console.error('Failed to copy text: ', err);
-  });
-});
-
 async function callGeminiApi(text, itineraryType) {
-  // Securely retrieve the API key from user's storage
   chrome.storage.sync.get(['apiKey'], async (result) => {
     if (!result.apiKey) {
-      // Guide the user to the options page if the key is not set
-      setUIState(false);
-      resultsDiv.innerHTML = 'API Key not found. Please <a href="#" id="openOptionsLink">set your key in the options page</a>.';
-      // Add a click listener to the new link to correctly open the options page
-      document.getElementById('openOptionsLink').addEventListener('click', (e) => {
-        e.preventDefault(); // Prevent the link from navigating
-        chrome.runtime.openOptionsPage();
-      });
+      renderErrorState('API Key not found. Please <a href="#" id="openOptionsLink">set your key</a> in the options page.');
       return;
     }
 
@@ -116,7 +162,7 @@ async function callGeminiApi(text, itineraryType) {
     }
     
     prompt += `\n\nWebpage Text:\n---\n${text}`;
-
+    
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -131,21 +177,21 @@ async function callGeminiApi(text, itineraryType) {
 
       if (!response.ok) {
         if (response.status === 400) {
-           throw new Error(`API request failed: Bad request. Is your API key valid?`);
+           throw new Error(`Bad request. Is your API key valid? Check the options page.`);
         }
         throw new Error(`API request failed with status ${response.status}`);
       }
 
       const data = await response.json();
       if (data.candidates && data.candidates.length > 0) {
-        const geminiResponse = data.candidates[0].content.parts[0].text;
-        setUIState(false, geminiResponse);
+        const geminiResponse = data.candidates[0].content.parts[0].text.trim();
+        renderResultsState(geminiResponse);
       } else {
-        setUIState(false, "Gemini returned an empty response.");
+        renderErrorState("Gemini returned an empty or invalid response.");
       }
     } catch (error) {
       console.error('Error calling Gemini API:', error);
-      setUIState(false, `Error: Could not get response from Gemini API. ${error.message}`);
+      renderErrorState(`Error: ${error.message}`);
     }
   });
 }
