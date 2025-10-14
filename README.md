@@ -9,9 +9,8 @@
 </p>
 
 <p align="center">
-  <video src="https://raw.githubusercontent.com/liv-iz/itinerary_extractor/main/icons/readme/chrome-capture-2025-10-14.mp4" autoplay loop muted playsinline width="80%"></video>
-  <em>Demonstration of extracting locations from a travel blog.</em>
   <img src="https://raw.githubusercontent.com/liv-iz/itinerary_extractor/main/icons/readme/chrome-capture-2025-10-14-ezgif.com-video-to-gif-converter.gif" alt="Demonstration of extracting locations from a travel blog." width="80%">
+  
 </p>
 
 ## Features
