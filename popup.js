@@ -71,37 +71,40 @@ function renderResultsState(resultsText) {
 
 document.addEventListener('DOMContentLoaded', renderInitialState);
 
-extractButton.addEventListener('click', () => {
-  const itineraryType = document.querySelector('input[name="itineraryType"]:checked').value;
-  renderLoadingState();
+extractButton.addEventListener('click', async () => {
+  // --- Pre-flight check for API Key ---
+  const { apiKey } = await chrome.storage.sync.get('apiKey');
+  if (!apiKey) {
+    renderErrorState('API Key not found. Please <a href="#" id="openOptionsLink">set your key</a> in the options page.');
+    return; // Stop execution if no key is found
+  }
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const activeTab = tabs[0];
+  try {
+    renderLoadingState();
+    const itineraryType = document.querySelector('input[name="itineraryType"]:checked').value;
 
-    chrome.scripting.executeScript(
-      {
-        target: { tabId: activeTab.id },
-        files: ['content.js'],
-      },
-      (injectionResults) => {
-        if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
-          renderErrorState('Error: Could not extract content from the page. Try reloading the tab.');
-          return;
-        }
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const injectionResults = await chrome.scripting.executeScript({
+      target: { tabId: activeTab.id },
+      files: ['content.js'],
+    });
 
-        const pageContent = injectionResults[0].result;
-        callGeminiApi(pageContent, itineraryType);
-      }
-    );
-  });
+    if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
+      throw new Error('Could not extract content from the page. Try reloading the tab.');
+    }
+
+    const pageContent = injectionResults[0].result;
+    await callGeminiApi(pageContent, itineraryType, apiKey);
+  } catch (error) {
+    console.error('Extraction failed:', error);
+    renderErrorState(`Error: ${error.message}`);
+  }
 });
 
 // Use event delegation for action buttons inside the dynamic container
 stateContainer.addEventListener('click', (event) => {
-  const target = event.target.closest('button');
-  if (!target) return;
-
-  if (target.id === 'openMapsButton') {
+  const button = event.target.closest('button');
+  if (button?.id === 'openMapsButton') {
     const locations = currentResults.split('\n')
       .map(line => line.replace(/^-/, '').trim())
       .filter(line => line.length > 0);
@@ -121,17 +124,15 @@ stateContainer.addEventListener('click', (event) => {
         chrome.tabs.create({ url: mapsUrl });
       }
     }
-  }
-
-  if (target.id === 'copyButton') {
-    const buttonTextSpan = target.querySelector('span:last-child');
+  } else if (button?.id === 'copyButton') {
+    const buttonTextSpan = button.querySelector('span:last-child');
     navigator.clipboard.writeText(currentResults).then(() => {
       const originalText = buttonTextSpan.innerText;
       buttonTextSpan.innerText = 'Copied!';
-      target.disabled = true;
+      button.disabled = true;
       setTimeout(() => {
         buttonTextSpan.innerText = originalText;
-        target.disabled = false;
+        button.disabled = false;
       }, 1500);
     }).catch(err => {
       console.error('Failed to copy text: ', err);
@@ -140,58 +141,50 @@ stateContainer.addEventListener('click', (event) => {
   }
 });
 
-async function callGeminiApi(text, itineraryType) {
-  chrome.storage.sync.get(['apiKey'], async (result) => {
-    if (!result.apiKey) {
-      renderErrorState('API Key not found. Please <a href="#" id="openOptionsLink">set your key</a> in the options page.');
-      return;
-    }
+async function callGeminiApi(text, itineraryType, apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
 
-    const apiKey = result.apiKey;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+  let prompt;
+  const baseInstruction = `This is content from a webpage which contains locations for travel plans. Act as an expert travel itinerary assistant. The provided text may contain irrelevant content like ads, navigation links, or unrelated articles. Your task is to analyze the main content and extract a travel itinerary, following these rules strictly: 1. Identify the primary city or region of the itinerary. All extracted locations must belong to this primary area. 2. Ignore any locations mentioned in ads, sidebars, or links to other stories that are not part of the main itinerary. 3. List the locations in the same chronological order they appear in the original text. 4. Format the output as a simple, bulleted list, with each location on a new line starting with a hyphen. 5. For each location, provide context (like the city and country) to make it easy to find on a map. 6. Only include real, verifiable locations that are part of the core itinerary. 7. Do not include any other text, titles, or introductory sentences. 8. Do not include repetitions. 9. If no itinerary or locations are found, please state that.`;
 
-    let prompt;
-    const baseInstruction = `This is content from a webpage which contains locations for travel plans. Act as an expert travel itinerary assistant. The provided text may contain irrelevant content like ads, navigation links, or unrelated articles. Your task is to analyze the main content and extract a travel itinerary, following these rules strictly: 1. Identify the primary city or region of the itinerary. All extracted locations must belong to this primary area. 2. Ignore any locations mentioned in ads, sidebars, or links to other stories that are not part of the main itinerary. 3. List the locations in the same chronological order they appear in the original text. 4. Format the output as a simple, bulleted list, with each location on a new line starting with a hyphen. 5. For each location, provide context (like the city and country) to make it easy to find on a map. 6. Only include real, verifiable locations that are part of the core itinerary. 7. Do not include any other text, titles, or introductory sentences. 8. Do not include repetitions. 9. If no itinerary or locations are found, please state that.`;
+  if (itineraryType === 'locations') {
+    prompt = `Extract a list of specific points of interest (like museums, restaurants, landmarks, parks, etc.). Do NOT include the general neighborhood or district name as a separate item in the list, only the specific places within them. ${baseInstruction}`;
+  } else if (itineraryType === 'neighborhoods') {
+    prompt = `Extract a list of ONLY the neighborhoods, districts, or areas mentioned. Do NOT include specific points of interest like museums or restaurants. ${baseInstruction}`;
+  } else { // 'cities'
+    prompt = `Extract a list of ONLY the cities mentioned for a multi-city trip (e.g., a trip across a country or continent). Do NOT include specific points of interest, neighborhoods, or districts. ${baseInstruction}`;
+  }
+  
+  prompt += `\n\nWebpage Text:\n---\n${text}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
+    });
 
-    if (itineraryType === 'locations') {
-      prompt = `Extract a list of specific points of interest (like museums, restaurants, landmarks, parks, etc.). Do NOT include the general neighborhood or district name as a separate item in the list, only the specific places within them. ${baseInstruction}`;
-    } else if (itineraryType === 'neighborhoods') {
-      prompt = `Extract a list of ONLY the neighborhoods, districts, or areas mentioned. Do NOT include specific points of interest like museums or restaurants. ${baseInstruction}`;
-    } else { // 'cities'
-      prompt = `Extract a list of ONLY the cities mentioned for a multi-city trip (e.g., a trip across a country or continent). Do NOT include specific points of interest, neighborhoods, or districts. ${baseInstruction}`;
-    }
-    
-    prompt += `\n\nWebpage Text:\n---\n${text}`;
-    
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 400) {
-           throw new Error(`Bad request. Is your API key valid? Check the options page.`);
-        }
-        throw new Error(`API request failed with status ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 400) {
+         throw new Error(`Bad request. Is your API key valid? Check the options page.`);
       }
-
-      const data = await response.json();
-      if (data.candidates && data.candidates.length > 0) {
-        const geminiResponse = data.candidates[0].content.parts[0].text.trim();
-        renderResultsState(geminiResponse);
-      } else {
-        renderErrorState("Gemini returned an empty or invalid response.");
-      }
-    } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      renderErrorState(`Error: ${error.message}`);
+      throw new Error(`API request failed with status ${response.status}`);
     }
-  });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates.length > 0) {
+      const geminiResponse = data.candidates[0].content.parts[0].text.trim();
+      renderResultsState(geminiResponse);
+    } else {
+      renderErrorState("Gemini returned an empty or invalid response.");
+    }
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    renderErrorState(`Error: ${error.message}`);
+  }
 }
