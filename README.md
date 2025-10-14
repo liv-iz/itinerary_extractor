@@ -9,8 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/liv-iz/itinerary_extractor/main/icons/readme/chrome-capture-2025-10-14-ezgif.com-video-to-gif-converter.gif" alt="Demonstration of extracting locations from a travel blog." width="80%">
-  
+  <img src="https://raw.githubusercontent.com/liv-iz/itinerary_extractor/main/icons/readme/better_working_gif.gif" alt="Demonstration of extracting locations from a travel blog." width="80%">
 </p>
 
 ## Features
@@ -48,7 +47,7 @@ This extension requires a Google Gemini API key to function. The free tier is ge
 This is a one-time setup. Your key is stored securely using `chrome.storage.sync` and is never transmitted to anyone other than Google's API.
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/username/repo/options-page.png" alt="Options page screenshot" width="500">
+  <img src="https://raw.githubusercontent.com/liv-iz/itinerary_extractor/main/icons/readme/image.png" alt="Options page screenshot" width="500">
 </p>
 
 ## How to Use
@@ -64,7 +63,7 @@ This is a one-time setup. Your key is stored securely using `chrome.storage.sync
 
 ## Privacy
 
-Your privacy is a top priority. The extension only accesses the content of your active tab when you click the "Extract" button. No data is ever sent to the developer. For full details, please read the **Privacy Policy**.
+Your privacy is a top priority. The extension only accesses the content of your active tab when you click the "Extract" button. No data is ever sent to the developer. For full details, please read the **[Privacy Policy](PRIVACY_POLICY.md)**.
 
 ## Feedback and Contributions
 
