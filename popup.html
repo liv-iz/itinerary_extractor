@@ -277,7 +277,38 @@
     <div class="content">
       <button id="extractButton" class="button button-primary button-full">Extract Itinerary</button>
       <div id="state-container">
-        <!-- This container will be dynamically populated by popup.js -->
+        <!-- Initial State -->
+        <div id="initial-state" class="state-container">
+          <span class="material-symbols-outlined state-icon">auto_awesome</span>
+          <p class="state-text">Click the button above to extract locations, neighborhoods, or cities from the current page.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="state-container" hidden>
+          <div class="spinner"></div>
+          <p class="state-text">Extracting content and asking Gemini...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="state-container" hidden>
+          <span class="material-symbols-outlined state-icon error-icon">error</span>
+          <p id="error-message" class="state-text"></p>
+        </div>
+
+        <!-- Results State -->
+        <div id="results-state" class="results-container" hidden>
+          <div id="results-list" class="results-list"></div>
+          <div id="results-actions" class="actions">
+            <button id="openMapsButton" class="button button-secondary">
+              <span class="material-symbols-outlined">map</span>
+              <span>Create Map</span>
+            </button>
+            <button id="copyButton" class="button button-secondary">
+              <span class="material-symbols-outlined">content_copy</span>
+              <span>Copy List</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

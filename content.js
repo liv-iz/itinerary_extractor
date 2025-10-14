@@ -19,40 +19,64 @@
   }
 
   /**
+   * From a list of elements, finds the one with the most text content.
+   * @param {NodeListOf<HTMLElement>} elements The elements to check.
+   * @returns {HTMLElement|null} The element with the most text, or null.
+   */
+  function findBestElement(elements) {
+    if (!elements || elements.length === 0) {
+      return null;
+    }
+    return Array.from(elements).reduce((best, current) => {
+      if (!best) return current;
+      return (current.innerText.length > best.innerText.length) ? current : best;
+    }, null);
+  }
+
+  /**
    * Finds and returns the text content from the most relevant element on the page.
    * The priority is:
-   * 1. The last response in a known LLM chat interface.
-   * 2. The content within a <main> element.
-   * 3. The content within the first <article> element.
-   * 4. As a fallback, the entire text of the page body.
+   * 1. Known LLM chat interfaces (e.g., Gemini, ChatGPT).
+   * 2. The <main> element.
+   * 3. The longest <article> element.
+   * 4. Common content container selectors (e.g., #content, .post-body).
+   * 5. As a fallback, the entire text of the page body.
    * @returns {string} The extracted text content.
    */
   function getPageContent() {
-    // Priority 1: Find the last response in an LLM chat.
-    const selectors = [
+    // Priority 1: LLM chat interfaces
+    const llmSelectors = [
       '.model-response-text .markdown', // Gemini
       'div[data-message-author-role="assistant"] .markdown', // ChatGPT
       '.model-response-text', // Gemini (fallback)
     ];
 
-    for (const selector of selectors) {
+    for (const selector of llmSelectors) {
       const elements = document.querySelectorAll(selector);
       if (elements.length > 0) {
-        // Return the last matching element's text
         return getCleanedText(elements[elements.length - 1]);
       }
     }
 
-    // Priority 2: Find the <main> element, which is semantically correct for main content.
+    // Priority 2: The <main> element
     const mainElement = document.querySelector('main');
     if (mainElement) return getCleanedText(mainElement);
 
-    // Priority 3: Find the first <article> element.
-    const articleElement = document.querySelector('article');
-    if (articleElement) return getCleanedText(articleElement);
+    // Priority 3: The longest <article> element
+    const bestArticle = findBestElement(document.querySelectorAll('article'));
+    if (bestArticle) return getCleanedText(bestArticle);
 
-    // Priority 4: Fallback to the entire body's text.
-    // The body is a special case; we clean it directly.
+    // Priority 4: Common content container selectors for blogs/articles
+    const commonContentSelectors = [
+      '#content', '#main-content', '#main', // Common IDs
+      '.post-content', '.entry-content', '.post-body', '.main-content', // Common classes
+    ];
+    for (const selector of commonContentSelectors) {
+        const element = document.querySelector(selector);
+        if (element) return getCleanedText(element);
+    }
+
+    // Priority 5: Fallback to the entire body's text.
     return getCleanedText(document.body);
   }
 
