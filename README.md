@@ -20,6 +20,7 @@
 - **Instant Google Maps Integration**: Turn your extracted list into a multi-stop Google Maps route with a single click.
 - **Copy to Clipboard**: Easily copy the clean, formatted list for use in your favorite notes app or travel planner.
 - **Secure & Private**: Your API key is stored securely in your browser's local storage and is never shared. The extension only reads page content when you tell it to.
+-   **Secure & Private**: The extension only reads page content when you tell it to. No API key is required from the user, and all communication with the backend is encrypted.
 
 ## Installation
 
@@ -36,20 +37,6 @@
 4.  Click "Load unpacked".
 5.  Select the cloned repository folder.
 
-## Setup: Getting Your API Key
-
-This extension requires a Google Gemini API key to function. The free tier is generous and perfect for personal use.
-
-1.  **Get Your Key**: Visit **Google AI Studio** to create your free API key.
-2.  **Open Extension Options**: Right-click the Itinerary Extractor icon in your Chrome toolbar and select "Options".
-3.  **Save Your Key**: Paste the API key into the input field and click "Save Key".
-
-This is a one-time setup. Your key is stored securely using `chrome.storage.sync` and is never transmitted to anyone other than Google's API.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/liv-iz/itinerary_extractor/main/icons/readme/image.png" alt="Options page screenshot" width="500">
-</p>
-
 ## How to Use
 
 1.  Navigate to a webpage that contains a travel itinerary (e.g., a travel blog, a "top 10" list).
@@ -63,7 +50,7 @@ This is a one-time setup. Your key is stored securely using `chrome.storage.sync
 
 ## Privacy
 
-Your privacy is a top priority. The extension only accesses the content of your active tab when you click the "Extract" button. No data is ever sent to the developer. For full details, please read the **[Privacy Policy](PRIVACY_POLICY.md)**.
+Your privacy is a top priority. The extension only accesses the content of your active tab when you click the "Extract" button. This content is processed by our secure backend but is never stored or logged. For full details, please read the **[Privacy Policy](PRIVACY_POLICY.md)**.
 
 ## Project Roadmap & v1.0 Launch
 
