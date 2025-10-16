@@ -65,6 +65,28 @@ This is a one-time setup. Your key is stored securely using `chrome.storage.sync
 
 Your privacy is a top priority. The extension only accesses the content of your active tab when you click the "Extract" button. No data is ever sent to the developer. For full details, please read the **[Privacy Policy](PRIVACY_POLICY.md)**.
 
+## Project Roadmap & v1.0 Launch
+
+This project is currently stable and feature-complete for its initial v1.0 release. The core functionality is robust and ready for real-world use.
+
+### Publishing to Gather Feedback
+
+The immediate goal is to publish the extension on the **Chrome Web Store**. This is the most critical step for validating the tool's usefulness and gathering feedback from a diverse user base. The strategy is to:
+
+1.  **Launch v1.0**: Submit the current version to the Chrome Web Store for review and public release.
+2.  **Engage with Early Adopters**: Share the extension in relevant communities (like travel forums or subreddits) to attract initial users.
+3.  **Listen and Iterate**: Actively monitor user reviews and GitHub issues to identify bugs, understand user needs, and prioritize the most requested features for the next version.
+
+### Future Work (Post-v1.0)
+
+The following features are being considered for future releases, driven by potential user feedback:
+
+-   **Extraction History**: A feature to view and restore the last 5-10 extracted itineraries directly from the popup.
+-   **Customizable Prompts**: An advanced option for users to edit the prompt sent to the Gemini API, allowing for more granular control over the output.
+-   **Exclusion Keywords**: The ability for users to specify words or phrases (e.g., "sponsored," "advertisement") to be ignored during the extraction process.
+-   **Additional Export Options**: Add buttons to export the list as a CSV file or integrate with popular note-taking apps like Notion.
+-   **Support for More Map Providers**: Include options to generate routes for other services like Apple Maps or Waze.
+
 ## Feedback and Contributions
 
 Found a bug or have a feature request? Please open an issue on GitHub.

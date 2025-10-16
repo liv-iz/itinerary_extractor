@@ -15,20 +15,27 @@ Itinerary Extractor is designed to be privacy-focused. We only handle two types 
 
 *   **Web Page Content:** The extracted text from your active tab is sent directly to the Google Gemini API. This is necessary for the AI to analyze the text and identify the travel itinerary as requested.
 *   **Your Gemini API Key:** Your API key is securely stored using Chrome's built-in `chrome.storage.sync` service. This means it is associated with your Google account and is not accessible by the developer of this extension. The key is included in the request sent to the Google Gemini API to authenticate you as a valid user of their service.
+*   **Web Page Content:** The extracted text from your active tab is first sent to our secure server, which then forwards it to the Google Gemini API for processing. This is necessary for the AI to analyze the text and identify the travel itinerary.
+*   **Your Gemini API Key:** This extension no longer requires you to provide your own API key.
 
 ### 3. Data Sharing and Third Parties
 
 The only third party your data is shared with is **Google**, via the Google Gemini API.
+Your data is processed by our server and shared with **Google** via the Google Gemini API.
 
 *   We send the webpage content and your API key to Google's servers for processing.
 *   We do **not** collect, store, or transmit any of your data to our own servers.
 *   We do **not** sell or share your data with any other third parties.
+*   We send the webpage content from your active tab to our server. Our server then sends this content to Google's servers for processing.
+*   We do **not** log, store, or permanently save the webpage content you process. The data is only held in memory on our server for the duration of the request to Google.
+*   We do **not** sell or share your data with any other third parties besides Google for the purpose of generating the itinerary.
 
 Your interaction with the Google Gemini API is also subject to Google's own Privacy Policy, which you can review here: https://policies.google.com/privacy
 
 ### 4. Security
 
 We take the security of your information seriously. Your Gemini API key is stored using `chrome.storage.sync`, a secure storage method provided and managed by the Google Chrome browser. All communication between the extension and the Google Gemini API is encrypted using HTTPS.
+We take the security of your information seriously. All communication between the extension and our server, and between our server and the Google Gemini API, is encrypted using HTTPS. Your secret API key is stored securely on our server and is never exposed to the client.
 
 ### 5. Changes to This Privacy Policy
 
