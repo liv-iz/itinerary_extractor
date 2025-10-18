@@ -1,5 +1,5 @@
 // This script runs in the context of the active web page.
-// It intelligently extracts the most relevant content for itinerary planning.
+// It extracts the most relevant content for itinerary planning.
 
 (() => {
   /**
@@ -14,7 +14,9 @@
     const clone = element.cloneNode(true);
     // Remove common non-content elements
     const selectorsToRemove = 'nav, footer, aside, header, script, style, [role="navigation"], [role="banner"], [role="contentinfo"]';
-    clone.querySelectorAll(selectorsToRemove).forEach(el => el.remove());
+    for (const el of clone.querySelectorAll(selectorsToRemove)) {
+      el.remove();
+    }
     return clone.innerText.trim();
   }
 
@@ -54,7 +56,7 @@
     for (const selector of llmSelectors) {
       const elements = document.querySelectorAll(selector);
       if (elements.length > 0) {
-        return getCleanedText(elements[elements.length - 1]);
+        return getCleanedText(elements.at(-1));
       }
     }
 

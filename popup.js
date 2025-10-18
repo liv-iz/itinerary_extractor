@@ -74,7 +74,7 @@ extractButton.addEventListener('click', async () => {
       files: ['content.js'],
     });
 
-    if (chrome.runtime.lastError || !injectionResults || !injectionResults[0]) {
+    if (chrome.runtime.lastError || !injectionResults?.[0]) {
       throw new Error('Could not extract content from the page. Try reloading the tab.');
     }
 
@@ -127,9 +127,9 @@ stateContainer.addEventListener('click', (event) => {
 });
 
 async function callGeminiApi(text, itineraryType) {
-  // This URL will point to YOUR backend server.
+  // This URL will point to backend server.
   // For local testing, it might be 'http://localhost:3000/extract'.
-  // For production, it will be your deployed server URL.
+  // For production, it will be deployed server URL (vercel).
   const backendUrl = 'https://itinerary-extractor-proxy-server.vercel.app/api/extract';
 
   let prompt;
@@ -152,13 +152,19 @@ async function callGeminiApi(text, itineraryType) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: prompt, // Send the constructed prompt to your backend
+        prompt: prompt, // Send the constructed prompt to backend
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      let errorMessage = `Request failed with status ${response.status}`;
+      // Check if the response is JSON before trying to parse it.
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || JSON.stringify(errorData);
+      }
+      // If not JSON, the server might have sent an HTML error page or plain text.
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
