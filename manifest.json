@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Itinerary Extractor",
-  "version": "2.0",
+  "version": "2.1",
   "author": "Liv_Iz",
   "description": "Extracts locations from an itinerary on a webpage using Gemini.",
   "homepage_url": "https://github.com/liv-iz/itinerary_extractor",
