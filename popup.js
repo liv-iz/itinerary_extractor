@@ -33,30 +33,19 @@ function renderErrorState(message) {
   `;
 }
 
-/**
- * Escapes HTML characters to prevent XSS and UI layout breaks
- * from unpredictable LLM outputs.
- */
-function escapeHTML(str) {
-  const p = document.createElement('p');
-  p.appendChild(document.createTextNode(str));
-  return p.innerHTML;
-}
-
-function renderResultsState(resultsText) {
+function renderResultsState(resultsText, isComplete = true) {
   extractButton.disabled = false;
   currentResults = resultsText; // Cache the results
   const isList = resultsText.trim().startsWith('-');
   
-  const safeResultsText = escapeHTML(resultsText);
+  let resultsContainer = document.querySelector('.results-container');
 
-  // The results container will now manage scrolling and fixed actions.
-  // The .actions div is now outside the scrollable .results-list.
-  stateContainer.innerHTML = `
-    <div class="results-container">
-      <div class="results-list">${safeResultsText}</div>
-      ${isList ? `
-        <div class="actions">
+  // Build the DOM skeleton only once to prevent massive UI lag while streaming
+  if (!resultsContainer) {
+    stateContainer.innerHTML = `
+      <div class="results-container">
+        <div class="results-list"></div>
+        <div class="actions" style="display: none;">
           <button id="openMapsButton" class="button button-secondary">
             <span class="material-symbols-outlined">map</span>
             <span>Create Map</span>
@@ -66,9 +55,23 @@ function renderResultsState(resultsText) {
             <span>Copy List</span>
           </button>
         </div>
-      ` : ''}
-    </div>
-  `;
+      </div>
+    `;
+    resultsContainer = document.querySelector('.results-container');
+  }
+
+  // Use textContent for instant, XSS-safe updates without destroying the DOM
+  const resultsList = resultsContainer.querySelector('.results-list');
+  resultsList.textContent = resultsText;
+
+  // Keep scrolled to the bottom while new text flows in
+  if (!isComplete) {
+    resultsList.scrollTop = resultsList.scrollHeight;
+  }
+
+  // Show actions only when stream finishes and it looks like a valid list
+  const actions = resultsContainer.querySelector('.actions');
+  actions.style.display = (isList && isComplete) ? 'flex' : 'none';
 }
 
 // --- Event Listeners ---
@@ -213,7 +216,7 @@ async function callGeminiApi(text, itineraryType, cacheKey) {
             const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
             
             fullText += textChunk;
-            renderResultsState(fullText);
+            renderResultsState(fullText, false); // Update text, keep buttons hidden
           } catch (err) {
             console.error('Failed to parse stream chunk:', err, 'Chunk was:', dataStr);
           }
@@ -222,6 +225,7 @@ async function callGeminiApi(text, itineraryType, cacheKey) {
     }
 
     if (fullText) {
+      renderResultsState(fullText, true); // Final update, show buttons
       await chrome.storage.local.set({ [cacheKey]: fullText });
     } else {
       renderErrorState("Gemini returned an empty or invalid response.");
