@@ -33,16 +33,28 @@ function renderErrorState(message) {
   `;
 }
 
+/**
+ * Escapes HTML characters to prevent XSS and UI layout breaks
+ * from unpredictable LLM outputs.
+ */
+function escapeHTML(str) {
+  const p = document.createElement('p');
+  p.appendChild(document.createTextNode(str));
+  return p.innerHTML;
+}
+
 function renderResultsState(resultsText) {
   extractButton.disabled = false;
   currentResults = resultsText; // Cache the results
   const isList = resultsText.trim().startsWith('-');
+  
+  const safeResultsText = escapeHTML(resultsText);
 
   // The results container will now manage scrolling and fixed actions.
   // The .actions div is now outside the scrollable .results-list.
   stateContainer.innerHTML = `
     <div class="results-container">
-      <div class="results-list">${resultsText}</div>
+      <div class="results-list">${safeResultsText}</div>
       ${isList ? `
         <div class="actions">
           <button id="openMapsButton" class="button button-secondary">
@@ -69,6 +81,16 @@ extractButton.addEventListener('click', async () => {
     const itineraryType = document.querySelector('input[name="itineraryType"]:checked').value;
 
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    // Fast-path: Check if we already extracted this type on this URL
+    const cacheKey = `itinerary_${activeTab.url}_${itineraryType}`;
+    const cachedData = await chrome.storage.local.get(cacheKey);
+    
+    if (cachedData[cacheKey]) {
+      renderResultsState(cachedData[cacheKey]);
+      return;
+    }
+
     const injectionResults = await chrome.scripting.executeScript({
       target: { tabId: activeTab.id },
       files: ['content.js'],
@@ -79,7 +101,7 @@ extractButton.addEventListener('click', async () => {
     }
 
     const pageContent = injectionResults[0].result;
-    await callGeminiApi(pageContent, itineraryType);
+    await callGeminiApi(pageContent, itineraryType, cacheKey);
   } catch (error) {
     console.error('Extraction failed:', error);
     renderErrorState(`Error: ${error.message}`);
@@ -126,7 +148,7 @@ stateContainer.addEventListener('click', (event) => {
   }
 });
 
-async function callGeminiApi(text, itineraryType) {
+async function callGeminiApi(text, itineraryType, cacheKey) {
   // This URL will point to backend server.
   // For local testing, it might be 'http://localhost:3000/extract'.
   // For production, it will be deployed server URL (vercel).
@@ -167,9 +189,40 @@ async function callGeminiApi(text, itineraryType) {
       throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    if (data.text) {
-      renderResultsState(data.text);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) {
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.replace('data: ', '').trim();
+          if (!dataStr) continue;
+          
+          try {
+            const data = JSON.parse(dataStr);
+            const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            
+            fullText += textChunk;
+            renderResultsState(fullText);
+          } catch (err) {
+            console.error('Failed to parse stream chunk:', err, 'Chunk was:', dataStr);
+          }
+        }
+      }
+    }
+
+    if (fullText) {
+      await chrome.storage.local.set({ [cacheKey]: fullText });
     } else {
       renderErrorState("Gemini returned an empty or invalid response.");
     }

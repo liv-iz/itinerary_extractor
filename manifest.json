@@ -12,7 +12,8 @@
   },
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "https://itinerary-extractor-proxy-server.vercel.app/"

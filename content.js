@@ -46,6 +46,7 @@
    * @returns {string} The extracted text content.
    */
   function getPageContent() {
+  function extract() {
     // Priority 1: LLM chat interfaces
     const llmSelectors = [
       '.model-response-text .markdown', // Gemini
@@ -80,6 +81,11 @@
 
     // Priority 5: Fallback to the entire body's text.
     return getCleanedText(document.body);
+  }
+
+  // Cap the text to roughly ~10k tokens. This massively speeds up the LLM inference time
+  // and reduces network payload size, without losing the main content on 99% of pages.
+  return extract().substring(0, 40000);
   }
 
   return getPageContent();
